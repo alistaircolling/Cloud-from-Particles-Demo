@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" 
+				addedToStage="application1_creationCompleteHandler(event)"
+				layout="absolute" minWidth="955" minHeight="600"
+				backgroundColor="0x0"
+				horizontalScrollPolicy="off"
+				verticalScrollPolicy="off" 
+				currentStateChange="application1_currentStateChangeHandler(event)"
+				currentState="Emitter">		
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.containers.Tile;
+			import mx.events.FlexEvent;
+			import mx.events.ItemClickEvent;
+			import mx.events.ListEvent;
+			import mx.events.NumericStepperEvent;
+			import mx.events.StateChangeEvent;
+			
+			private var mainView:MainView;
+			private var tilesView:TilesView;
+			private var rolloverView:RolloverView;
+			private var partTimer:Timer;
+			
+			[Bindable]
+			public var aC:ArrayCollection = new ArrayCollection(
+				[ {label:"Dot", data:1}, 
+					{label:"Radial Dot", data:2}]);
+			
+			[Bindable]
+			public var aCounter:ArrayCollection = new ArrayCollection(
+				[ {label:"Steady", data:1}, 
+					{label:"Pulse", data:2}]);
+
+			
+			
+
+			protected function application1_creationCompleteHandler(event:Event):void
+			{
+				stage.scaleMode = StageScaleMode.NO_SCALE;
+				stage.align = StageAlign.TOP_LEFT;
+				
+				mainView = new MainView();
+				mainCanvas.rawChildren.addChild(mainView);
+				partTimer = new Timer(500, 0);
+				partTimer.addEventListener(TimerEvent.TIMER, timerListener);
+				partTimer.start();
+				
+				tilesView = new TilesView();
+				tilesView.y = (stage.stageHeight/2)-(tilesView.height/2);
+				tilesView.x = 100;
+				tilesCanvas.rawChildren.addChild(tilesView);
+				
+				rolloverView = new RolloverView();
+				rolloverView.x = (rolloverCanvas.width/2) - (rolloverView.width/2);
+				rolloverView.y = (rolloverCanvas.width/2) - (rolloverView.height);
+				
+				rolloverCanvas.rawChildren.addChild(rolloverView);
+			}
+
+			protected function timerListener(t:TimerEvent):void{
+				
+				var str:String = "Particles: "+mainView.emitter.particles.length;
+				particlesCount.text = str;				
+			}
+			
+			protected function starter_clickHandler(event:MouseEvent):void
+			{
+				mainView.emitter.y = stage.stageHeight +100;			
+				mainView.startEmitter();
+			}
+
+
+			protected function stopper_clickHandler(event:MouseEvent):void
+			{
+				mainView.stopEmitter();
+			}
+
+
+			protected function fS_clickHandler(event:MouseEvent):void
+			{
+				
+				if (stage.displayState == StageDisplayState.NORMAL) {
+					stage.displayState=StageDisplayState.FULL_SCREEN;
+				} else {
+					stage.displayState=StageDisplayState.NORMAL;
+				}
+				mainView.emitter.y = stage.stageHeight +100;
+				mainView.emitter.x = stage.stageWidth/2;
+				
+				rolloverView.x = (stage.stageWidth/2)-(rolloverView.width/2);
+				rolloverView.y = (stage.stageHeight/2)-(rolloverView.height/2);
+				tilesView.y = (stage.stageHeight/2)-(tilesView.height/2);
+			}
+
+
+			protected function rateCounter_changeHandler(event:NumericStepperEvent):void
+			{
+				mainView.setEmitAmount(event.value);
+			}
+
+
+			protected function imageChooser_clickHandler(event:ListEvent):void
+			{
+				
+				mainView.setImage(event.currentTarget.selectedLabel);
+			}
+
+
+			protected function counterSelect_changeHandler(event:ListEvent):void
+			{
+				mainView.setCounter(event.currentTarget.selectedLabel);
+			}
+
+
+			protected function blur_changeHandler(event:Event):void
+			{				
+				mainView.addBlur(event.currentTarget.selected);
+			}
+
+
+			protected function pauser_clickHandler(event:MouseEvent):void
+			{
+				mainView.pause(event.currentTarget.selected);
+			}
+
+
+			protected function toBMP_clickHandler(event:MouseEvent):void
+			{
+				mainView.gotoBMP();
+			}
+
+
+			protected function togglebuttonbar1_itemClickHandler(event:ItemClickEvent):void
+			{
+				mainView.stopEmitter();
+				rolloverView.stop();
+				trace("change state");
+				var str:String = event.label;
+				switch(str){
+					case "Emitter":
+					
+					break
+					case "Tiles":
+						mainView.stopEmitter();
+					break	
+					
+				}
+				currentState = str;
+			}
+
+
+			protected function application1_currentStateChangeHandler(event:StateChangeEvent):void
+			{
+					trace("app changed state");
+					switch(currentState){
+						case "Tiles":
+							
+						break
+						case "Rollover":
+							rolloverView.stop();
+						break	
+						
+					}
+			}
+
+
+			protected function start_clickHandler(event:MouseEvent):void
+			{
+				tilesView.start();
+			}
+
+
+			protected function stopTiles_clickHandler(event:MouseEvent):void
+			{
+				tilesView.stop();
+			}
+
+
+			protected function addOutlines_clickHandler(event:MouseEvent):void
+			{
+				tilesView.setOutlines(event.currentTarget.selected);
+			}
+
+
+			protected function bitmaps_clickHandler(event:MouseEvent):void
+			{
+				tilesView.showBMPs(event.currentTarget.selected);
+			}
+
+		]]>
+	</mx:Script>
+	<mx:states>
+		<mx:State name="Emitter">
+			<mx:RemoveChild target="{rolloverCanvas}"/>
+			<mx:RemoveChild target="{tilesCanvas}"/>
+			
+			</mx:State>
+		<mx:State name="Tiles">
+			<mx:RemoveChild target="{mainCanvas}"/>
+			<mx:RemoveChild target="{rolloverCanvas}"/>
+		</mx:State>
+		<mx:State name="Rollover">
+			<mx:RemoveChild target="{mainCanvas}"/>
+			<mx:RemoveChild target="{tilesCanvas}"/>
+		</mx:State>
+	</mx:states>
+	
+	<mx:Canvas id="tilesCanvas" 
+			   horizontalCenter="0"
+			   verticalCenter="0"
+			   width="100%" height="100%" backgroundColor="0x535353">
+		<mx:HBox bottom="10" left="10">
+			<mx:Button id="startTiles" 
+					   label="start"
+					   click="start_clickHandler(event)"/>
+			<mx:Button id="stopTiles"
+					   click="stopTiles_clickHandler(event)"
+					   label="stop"/>
+			<mx:Button id="bitmaps"
+					   label="bitmaps"
+					   toggle="true"
+					   click="bitmaps_clickHandler(event)"
+					   />
+			<mx:Button id="addOutlines"
+					   toggle="true"
+					   click="addOutlines_clickHandler(event)"
+					   label="outlines"/>
+			<mx:Button/>
+			
+		</mx:HBox>
+	</mx:Canvas>
+	
+	<mx:Canvas id="rolloverCanvas" 
+			   horizontalCenter="0"
+			   verticalCenter="0"
+			   width="100%" height="100%" 
+			   backgroundColor="0x5A5A5A">
+	</mx:Canvas>
+	
+	<mx:Canvas id="mainCanvas" width="100%" height="100%" horizontalCenter="0" top="0">
+	<mx:HBox  left="0" top="50">
+		<mx:Text id="particlesCount"
+				 text="asdkhgasd" color="#FFFFFF" fontFamily="Verdana" fontSize="12" height="48"/>
+	</mx:HBox>
+	<mx:HBox bottom="10" left="10">
+		
+		<mx:Button id="starter" label="start" click="starter_clickHandler(event)"/>
+		<mx:Button id="stopper" label="stop" click="stopper_clickHandler(event)"/>
+		<mx:Button id="pauser" 
+				   toggle="true"
+				   label="pause" click="pauser_clickHandler(event)"/>
+		<mx:Label text="Rate" color="#FFFFFF" horizontalCenter="0" id="rate"/>
+		<mx:NumericStepper id="rateCounter" 
+						   value="20"
+						   change="rateCounter_changeHandler(event)" maximum="1000" />
+		<mx:ComboBox id="imageChooser" 
+					 dataProvider="{aC}"
+					 change="imageChooser_clickHandler(event)">
+		</mx:ComboBox>
+		<mx:ComboBox id="counterChooser" 
+					 dataProvider="{aCounter}"
+					 change="counterSelect_changeHandler(event)">
+		</mx:ComboBox>
+		<mx:Button id="blur"
+				   toggle="true"
+				   label="blur" change="blur_changeHandler(event)"/>
+		<mx:Button id="toBMP" label="bitmap" click="toBMP_clickHandler(event)"/>
+					 
+	</mx:HBox>
+		</mx:Canvas>
+		<mx:Button id="fS" 
+				   right="0"
+				   label="full screen" click="fS_clickHandler(event)"/>
+		<mx:ToggleButtonBar  horizontalGap="5" itemClick="togglebuttonbar1_itemClickHandler(event)">
+			<mx:dataProvider>
+				<mx:Array>
+					<mx:String>Emitter</mx:String>
+					<mx:String>Tiles</mx:String>
+					<mx:String>Rollover</mx:String>
+				</mx:Array>
+			</mx:dataProvider>
+		</mx:ToggleButtonBar>
+	
+</mx:Application>
